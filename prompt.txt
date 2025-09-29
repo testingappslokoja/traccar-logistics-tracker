@@ -1,0 +1,43 @@
+Prompt for E-commerce Logistics Tracker Simulation
+Create a single-file HTML, Tailwind CSS, and JavaScript web application that simulates the end-to-end user experience of ordering from an e-commerce platform and tracking the delivery in real-time using simulated logistics data.
+
+Technical Requirements
+Single File Mandate: All HTML structure, styling (using Tailwind CSS via CDN), and application logic must be contained within one single logistics_tracker.html file.
+
+Mapping Library: Use the Leaflet library (via CDN for both CSS and JS) to display the map and handle location markers.
+
+State Management: Use localStorage to persist the user's login status, cart contents, and active order details across sessions.
+
+Error Handling: Do not use window.alert() or window.confirm(). Implement a custom, styled modal message box for all user notifications (e.g., login success, order confirmed).
+
+Core User Flow & Tracking Logic
+The application must manage four distinct views:
+
+Authentication Screen (Simulated): A simple landing page with a button for a simulated "Login / Sign Up."
+
+Shopping Screen: Display a list of mock products. Allow the user to add items to a persistent cart. Display the running cart total and a Checkout button.
+
+Checkout Screen: Show a summary of the order (subtotal, tax, delivery fee, total). A "Confirm & Place Order" button should assign a mock Device ID (simulating a Traccar device) and transition to the Tracking Screen.
+
+Real-Time Tracking Screen (Main Feature):
+
+Display the current order status (e.g., "Picked Up," "En Route," "Delivered!").
+
+Show the Leaflet map centered on the current tracking view.
+
+Place a static Customer Destination Marker (📍) at a fixed location (e.g., Los Angeles coordinates).
+
+Place a Driver Marker (🚗) at a mock starting point (e.g., slightly north/east of the destination).
+
+Logistics Simulation (Mock Traccar WebSocket)
+Implement a function (startMockTraccarWebSocket) that uses a setInterval loop to simulate a real-time data feed:
+
+The interval should run every 2 seconds.
+
+In each interval, calculate a new latitude and longitude, moving the driver marker linearly closer to the customer destination.
+
+Update the driverMarker position on the map using Leaflet's methods. The map should pan to follow the driver's location.
+
+Based on the driver's proximity or steps completed, update the text status displayed to the user (e.g., "Driver is en route," "Driver is X seconds away!").
+
+Once the driver reaches the final step, stop the interval, update the status to "Delivered!", and make a "View Past Orders" button visible to reset the flow.
