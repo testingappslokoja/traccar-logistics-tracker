@@ -3,323 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-commerce Logistics Tracker</title>
+    <title>Multi-Order Logistics Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <style>
-        /* Simple class to hide elements */
-        .hidden {
-            display: none;
-        }
-        #mapid {
-            height: 100vh; /* Full viewport height */
-            width: 100%;
-        }
+        .hidden { display: none; }
+        #mapid { height: 100vh; width: 100%; }
     </style>
 </head>
 <body class="bg-gray-100">
 
-    <!-- Main Application Container -->
     <div id="app" class="container mx-auto p-4">
 
-        <!-- 1. Authentication View -->
-        <div id="auth-view" class="flex flex-col items-center justify-center min-h-screen hidden">
-            <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-sm text-center">
-                <h1 class="text-3xl font-bold mb-6">Welcome to the Tracker</h1>
-                <button id="login-btn" class="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg hover:bg-blue-700 transition duration-300">
-                    Login / Sign Up
+        <!-- 1. Main Dashboard View -->
+        <div id="dashboard-view">
+            <div class="bg-white p-8 rounded-lg shadow-md text-center">
+                <h1 class="text-3xl font-bold mb-6">Logistics Dashboard</h1>
+                <button id="simulate-orders-btn" class="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg hover:bg-blue-700 transition duration-300">
+                    Simulate 100 Active Orders
                 </button>
-            </div>
-        </div>
-
-        <!-- 2. Shopping View -->
-        <div id="shopping-view" class="min-h-screen hidden">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- Product List -->
-                <div class="md:col-span-2 bg-white p-6 rounded-lg shadow-md">
-                    <h2 class="text-2xl font-bold mb-4">Products</h2>
-                    <div id="product-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <!-- Product items will be rendered here by JS -->
-                        <div class="border p-4 rounded-lg text-center" data-product-id="prod001" data-product-name="Premium Widget" data-product-price="19.99">
-                            <h3 class="font-semibold text-lg">Premium Widget</h3>
-                            <p class="text-gray-600">$19.99</p>
-                            <button class="mt-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 add-to-cart-btn">Add to Cart</button>
-                        </div>
-                        <div class="border p-4 rounded-lg text-center" data-product-id="prod002" data-product-name="Deluxe Gadget" data-product-price="29.99">
-                            <h3 class="font-semibold text-lg">Deluxe Gadget</h3>
-                            <p class="text-gray-600">$29.99</p>
-                            <button class="mt-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 add-to-cart-btn">Add to Cart</button>
-                        </div>
-                        <div class="border p-4 rounded-lg text-center" data-product-id="prod003" data-product-name="Basic Gizmo" data-product-price="9.99">
-                            <h3 class="font-semibold text-lg">Basic Gizmo</h3>
-                            <p class="text-gray-600">$9.99</p>
-                            <button class="mt-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 add-to-cart-btn">Add to Cart</button>
-                        </div>
+                <div class="mt-8">
+                    <h2 class="text-2xl font-bold mb-4">Active Orders</h2>
+                    <div id="order-list" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 text-center">
+                        <!-- Order list will be populated here -->
                     </div>
-                </div>
-
-                <!-- Cart Summary -->
-                <div class="md:col-span-1 bg-white p-6 rounded-lg shadow-md">
-                    <h2 class="text-2xl font-bold mb-4">Your Cart</h2>
-                    <div id="cart-items" class="mb-4"></div>
-                    <div id="cart-summary">
-                        <p>Items: <span id="cart-item-count">0</span></p>
-                        <p>Total: $<span id="cart-total">0.00</span></p>
-                    </div>
-                    <button id="checkout-btn" class="mt-6 w-full bg-blue-600 text-white px-6 py-3 rounded-lg text-lg hover:bg-blue-700 transition duration-300">
-                        Checkout
-                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- 3. Checkout View -->
-        <div id="checkout-view" class="flex flex-col items-center justify-center min-h-screen hidden">
-            <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
-                <h2 class="text-2xl font-bold mb-4 text-center">Order Summary</h2>
-                <div class="space-y-2 mb-6">
-                    <div class="flex justify-between">
-                        <span>Subtotal:</span>
-                        <span>$<span id="checkout-subtotal">0.00</span></span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>Tax (10%):</span>
-                        <span>$<span id="checkout-tax">0.00</span></span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>Delivery Fee:</span>
-                        <span>$<span id="checkout-delivery-fee">5.00</span></span>
-                    </div>
-                    <div class="border-t border-gray-300 pt-2 flex justify-between font-bold text-lg">
-                        <span>Total:</span>
-                        <span>$<span id="checkout-total">0.00</span></span>
-                    </div>
-                </div>
-                <button id="place-order-btn" class="w-full bg-green-600 text-white px-6 py-3 rounded-lg text-lg hover:bg-green-700 transition duration-300">
-                    Confirm & Place Order
-                </button>
-            </div>
-        </div>
-
-        <!-- 4. Tracking View -->
+        <!-- 2. Tracking View -->
         <div id="tracking-view" class="relative min-h-screen hidden">
             <div id="mapid" class="absolute inset-0"></div>
-            <div class="absolute top-4 left-1/2 -translate-x-1/2 bg-white p-4 rounded-lg shadow-lg z-10 flex flex-col items-center">
-                <p class="text-lg font-semibold">Order Status: <span id="order-status">Preparing...</span></p>
-                <button id="view-past-orders-btn" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hidden hover:bg-blue-700 transition duration-300">
-                    View Past Orders
-                </button>
+            <div class="absolute top-4 left-4 bg-white p-4 rounded-lg shadow-lg z-10 flex flex-col items-center">
+                <button id="back-to-dashboard-btn" class="mb-4 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition duration-300">Back to Dashboard</button>
+                <p class="text-lg font-semibold">Tracking Order: <span id="tracking-order-id"></span></p>
+                <p class="text-lg font-semibold">Status: <span id="order-status"></span></p>
             </div>
         </div>
 
     </div>
 
     <script>
-        // --- View Management ---
-        const views = ['auth-view', 'shopping-view', 'checkout-view', 'tracking-view'];
+        // --- State Management ---
+        let allOrders = [];
+        let activeSimulation = null;
 
+        // --- DOM Elements ---
+        const views = ['dashboard-view', 'tracking-view'];
+        const simulateBtn = document.getElementById('simulate-orders-btn');
+        const orderListDiv = document.getElementById('order-list');
+        const backToDashboardBtn = document.getElementById('back-to-dashboard-btn');
+        const trackingOrderIdSpan = document.getElementById('tracking-order-id');
+        const orderStatusSpan = document.getElementById('order-status');
+
+        // --- View Management ---
         function showView(viewId) {
             views.forEach(id => {
-                const viewElement = document.getElementById(id);
-                if (id === viewId) {
-                    viewElement.classList.remove('hidden');
-                } else {
-                    viewElement.classList.add('hidden');
-                }
+                document.getElementById(id).classList.toggle('hidden', id !== viewId);
             });
         }
 
-        // --- Story 1.2: Simulated Authentication ---
-        const loginBtn = document.getElementById('login-btn');
+        // --- Order Generation ---
+        function generateRandomCoords(baseLat, baseLng) {
+            const lat = baseLat + (Math.random() - 0.5) * 0.2;
+            const lng = baseLng + (Math.random() - 0.5) * 0.2;
+            return [lat, lng];
+        }
 
-        function checkLoginStatus() {
-            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-            if (isLoggedIn) {
-                showView('shopping-view');
-            } else {
-                showView('auth-view');
+        simulateBtn.addEventListener('click', () => {
+            allOrders = [];
+            for (let i = 0; i < 100; i++) {
+                const orderId = `XYZ-${String(1000 + i).padStart(4, '0')}`;
+                allOrders.push({
+                    id: orderId,
+                    startCoords: generateRandomCoords(34.15, -118.35),
+                    destinationCoords: generateRandomCoords(34.05, -118.24),
+                });
             }
-        }
+            renderOrderList();
+        });
 
-        if (loginBtn) {
-            loginBtn.addEventListener('click', () => {
-                localStorage.setItem('isLoggedIn', 'true');
-                showView('shopping-view');
+        function renderOrderList() {
+            orderListDiv.innerHTML = '';
+            allOrders.forEach(order => {
+                const orderElement = document.createElement('button');
+                orderElement.className = 'p-4 bg-gray-200 rounded-lg hover:bg-blue-200';
+                orderElement.textContent = order.id;
+                orderElement.onclick = () => trackOrder(order.id);
+                orderListDiv.appendChild(orderElement);
             });
         }
 
-        // --- Story 1.4: Cart Functionality ---
-        let cart = JSON.parse(localStorage.getItem('cart')) || [];
-
-        const cartItemCountSpan = document.getElementById('cart-item-count');
-        const cartTotalSpan = document.getElementById('cart-total');
-        const productListDiv = document.getElementById('product-list');
-        const cartItemsDiv = document.getElementById('cart-items');
-        const checkoutBtn = document.getElementById('checkout-btn');
-
-        function updateCartDisplay() {
-            let itemCount = 0;
-            let total = 0;
-            cartItemsDiv.innerHTML = ''; // Clear current cart items display
-
-            cart.forEach(item => {
-                itemCount += item.quantity;
-                total += item.price * item.quantity;
-
-                const cartItemElement = document.createElement('div');
-                cartItemElement.className = 'flex justify-between items-center mb-2';
-                cartItemElement.innerHTML = `
-                    <span>${item.name} x ${item.quantity}</span>
-                    <span>$${(item.price * item.quantity).toFixed(2)}</span>
-                `;
-                cartItemsDiv.appendChild(cartItemElement);
-            });
-
-            cartItemCountSpan.textContent = itemCount;
-            cartTotalSpan.textContent = total.toFixed(2);
-            localStorage.setItem('cart', JSON.stringify(cart));
-        }
-
-        productListDiv.addEventListener('click', (event) => {
-            if (event.target.classList.contains('add-to-cart-btn')) {
-                const productElement = event.target.closest('[data-product-id]');
-                const productId = productElement.dataset.productId;
-                const productName = productElement.dataset.productName;
-                const productPrice = parseFloat(productElement.dataset.productPrice);
-
-                const existingItem = cart.find(item => item.productId === productId);
-
-                if (existingItem) {
-                    existingItem.quantity++;
-                } else {
-                    cart.push({
-                        productId: productId,
-                        name: productName,
-                        price: productPrice,
-                        quantity: 1
-                    });
-                }
-                updateCartDisplay();
-            }
-        });
-
-        // --- Story 2.1: Checkout Screen ---
-        const checkoutSubtotalSpan = document.getElementById('checkout-subtotal');
-        const checkoutTaxSpan = document.getElementById('checkout-tax');
-        const checkoutDeliveryFeeSpan = document.getElementById('checkout-delivery-fee');
-        const checkoutTotalSpan = document.getElementById('checkout-total');
-        const placeOrderBtn = document.getElementById('place-order-btn');
-
-        checkoutBtn.addEventListener('click', () => {
-            showView('checkout-view');
-            let subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            let tax = subtotal * 0.10; // 10% tax
-            let deliveryFee = 5.00;
-            let total = subtotal + tax + deliveryFee;
-
-            checkoutSubtotalSpan.textContent = subtotal.toFixed(2);
-            checkoutTaxSpan.textContent = tax.toFixed(2);
-            checkoutDeliveryFeeSpan.textContent = deliveryFee.toFixed(2);
-            checkoutTotalSpan.textContent = total.toFixed(2);
-        });
-
-        placeOrderBtn.addEventListener('click', () => {
-            showView('tracking-view');
-            // Use a small timeout to ensure the view is rendered before initializing the map
-            setTimeout(() => {
-                initializeMap();
-                startMockTraccarWebSocket();
-            }, 100);
-        });
-
-        // --- Story 2.2: Map Initialization & Destination Marker ---
+        // --- Tracking Logic ---
         let map = null;
-        const destinationCoords = [34.0522, -118.2437]; // Los Angeles
-        let driverMarker = null; 
+        let driverMarker = null;
 
-        function initializeMap() {
-            if (map !== null) {
-                map.remove(); // Remove existing map if any
-            }
-            map = L.map('mapid').setView(destinationCoords, 13); // Set view to LA
+        function trackOrder(orderId) {
+            const order = allOrders.find(o => o.id === orderId);
+            if (!order) return;
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
+            showView('tracking-view');
+            trackingOrderIdSpan.textContent = order.id;
 
-            L.marker(destinationCoords).addTo(map)
-                .bindPopup('Customer Destination')
-                .openPopup();
+            setTimeout(() => {
+                initializeMap(order);
+                startSimulation(order);
+            }, 100);
         }
 
-        // --- Story 2.3: Tracking Simulation Logic ---
-        const startCoords = [34.15, -118.35]; // Slightly north/east of LA
-        const totalSteps = 100; // Number of steps for the driver to reach destination
-        let currentStep = 0;
-        let simulationInterval = null;
+        function initializeMap(order) {
+            if (map) map.remove();
+            map = L.map('mapid').setView(order.destinationCoords, 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
+            L.marker(order.destinationCoords).addTo(map).bindPopup('Destination');
+        }
 
-        function startMockTraccarWebSocket() {
-            const orderStatusSpan = document.getElementById('order-status');
-            const viewPastOrdersBtn = document.getElementById('view-past-orders-btn');
+        function startSimulation(order) {
+            if (activeSimulation) clearInterval(activeSimulation.interval);
 
-            currentStep = 0; // Reset for new simulation
-            if (simulationInterval) {
-                clearInterval(simulationInterval);
-            }
-            viewPastOrdersBtn.classList.add('hidden'); // Hide button at start of new simulation
+            let currentStep = 0;
+            const totalSteps = 100;
 
-            if (driverMarker) {
-                map.removeLayer(driverMarker);
-            }
-            driverMarker = L.marker(startCoords, { icon: L.divIcon({ className: 'custom-div-icon', html: '<div class="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">🚗</div>', iconSize: [30, 30] }) }).addTo(map);
+            if (driverMarker) map.removeLayer(driverMarker);
+            driverMarker = L.marker(order.startCoords, { icon: L.divIcon({ className: 'custom-div-icon', html: '<div class="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">🚗</div>', iconSize: [30, 30] }) }).addTo(map);
 
-            simulationInterval = setInterval(() => {
+            const interval = setInterval(() => {
                 if (currentStep < totalSteps) {
                     currentStep++;
-                    const lat = startCoords[0] + (destinationCoords[0] - startCoords[0]) * (currentStep / totalSteps);
-                    const lng = startCoords[1] + (destinationCoords[1] - startCoords[1]) * (currentStep / totalSteps);
+                    const lat = order.startCoords[0] + (order.destinationCoords[0] - order.startCoords[0]) * (currentStep / totalSteps);
+                    const lng = order.startCoords[1] + (order.destinationCoords[1] - order.startCoords[1]) * (currentStep / totalSteps);
                     const currentCoords = [lat, lng];
 
                     driverMarker.setLatLng(currentCoords);
                     map.panTo(currentCoords);
-
-                    const remainingSteps = totalSteps - currentStep;
-                    if (remainingSteps > 0) {
-                        orderStatusSpan.textContent = `Driver is en route (${remainingSteps * 2} seconds away!)`;
-                    } else {
-                        orderStatusSpan.textContent = `Driver is arriving!`;
-                    }
-
+                    orderStatusSpan.textContent = 'En Route';
                 } else {
-                    clearInterval(simulationInterval);
-                    orderStatusSpan.textContent = "Delivered!";
-                    viewPastOrdersBtn.classList.remove('hidden'); // Show button when delivered
+                    clearInterval(interval);
+                    orderStatusSpan.textContent = 'Delivered!';
                 }
-            }, 2000); // Every 2 seconds
+            }, 200); // Faster simulation for demo purposes
+
+            activeSimulation = { interval, orderId: order.id };
         }
 
-        // --- Story 2.5: Delivery Completion & Reset ---
-        document.getElementById('view-past-orders-btn').addEventListener('click', () => {
-            localStorage.removeItem('cart'); // Clear cart
-            localStorage.removeItem('isLoggedIn'); // Optionally log out user
-            cart = []; // Reset local cart variable
-            updateCartDisplay(); // Update cart display
-            showView('shopping-view'); // Go back to shopping screen
-        });
-
-        // Initial check when the page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            checkLoginStatus();
-            updateCartDisplay(); // Update cart display on load
+        // --- Navigation ---
+        backToDashboardBtn.addEventListener('click', () => {
+            if (activeSimulation) clearInterval(activeSimulation.interval);
+            activeSimulation = null;
+            showView('dashboard-view');
         });
 
     </script>
     <style>
-        .custom-div-icon {
-            background-color: transparent;
-            border: none;
-        }
+        .custom-div-icon { background-color: transparent; border: none; }
     </style>
 
 </body>
