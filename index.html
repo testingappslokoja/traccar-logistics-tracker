@@ -45,9 +45,13 @@
     </div>
 
     <script>
+        // --- Config ---
+        const GEOAPIFY_API_KEY = '2334f4bf57624683af9b5e747e7b39a0'; // <-- IMPORTANT: REPLACE WITH YOUR KEY
+
         // --- State Management ---
         let allOrders = [];
         let activeSimulation = null;
+        let pointsOfInterest = [];
 
         // --- DOM Elements ---
         const views = ['dashboard-view', 'tracking-view'];
@@ -64,31 +68,108 @@
             });
         }
 
-        // --- Order Generation ---
-        function generateRandomCoords(baseLat, baseLng) {
-            const lat = baseLat + (Math.random() - 0.5) * 0.2;
-            const lng = baseLng + (Math.random() - 0.5) * 0.2;
-            return [lat, lng];
+        // --- Data Fetching ---
+        async function fetchPointsOfInterest() {
+            if (GEOAPIFY_API_KEY === 'YOUR_GEOAPIFY_API_KEY') {
+                alert('Please replace YOUR_GEOAPIFY_API_KEY with your actual key in the script.');
+                return;
+            }
+
+            try {
+                simulateBtn.disabled = true;
+                simulateBtn.textContent = 'Loading Locations...';
+
+                // Step 1: Get the placeId for Lokoja
+                const geocodeUrl = `https://api.geoapify.com/v1/geocode/search?text=Lokoja&type=city&apiKey=${GEOAPIFY_API_KEY}`;
+                const geocodeResponse = await fetch(geocodeUrl);
+                const geocodeData = await geocodeResponse.json();
+                if (!geocodeData.features || geocodeData.features.length === 0) {
+                    throw new Error('Could not find Lokoja. Please check the city name.');
+                }
+                const placeId = geocodeData.features[0].properties.place_id;
+                console.log('Found Lokoja placeId:', placeId);
+
+                // Step 2: Use the placeId to get Points of Interest
+                const placesUrl = `https://api.geoapify.com/v2/places?categories=commercial,catering,tourism,accommodation,leisure,natural&filter=place:${placeId}&limit=200&apiKey=${GEOAPIFY_API_KEY}`;
+                const placesResponse = await fetch(placesUrl);
+                const placesData = await placesResponse.json();
+                pointsOfInterest = placesData.features.map(feature => ({
+                    name: feature.properties.name,
+                    coords: [feature.properties.lat, feature.properties.lon]
+                }));
+                console.log(`Loaded ${pointsOfInterest.length} points of interest.`);
+                generateOrders();
+
+            } catch (error) {
+                console.error('Error fetching points of interest:', error);
+                alert('Could not fetch location data. Please check your API key and network connection.');
+            } finally {
+                simulateBtn.disabled = false;
+                simulateBtn.textContent = 'Simulate 100 Active Orders';
+            }
         }
 
-        simulateBtn.addEventListener('click', () => {
+        // --- Order Generation ---
+        function generateOrders() {
+            if (pointsOfInterest.length < 2) {
+                alert('Not enough points of interest loaded to generate orders.');
+                return;
+            }
             allOrders = [];
-            for (let i = 0; i < 100; i++) {
+
+            // 1. Create the specific first four orders
+            const stadiumCoords = [7.81334, 6.69838];
+            const specificDestinations = [
+                { id: 'XYZ-1000', name: 'Kogi State Specialist Hospital', coords: [7.7935662111756665, 6.731518881826145] },
+                { id: 'XYZ-1001', name: 'Treasures', coords: [7.794692961504175, 6.730789321006441] },
+                { id: 'XYZ-1002', name: 'Edge Drive Hotel', coords: [7.8026333967069235, 6.733328041929266] },
+                { id: 'XYZ-1003', name: 'Hotel Pacific', coords: [7.790236424516143, 6.724883130285108] }
+            ];
+
+            specificDestinations.forEach(dest => {
+                allOrders.push({
+                    id: dest.id,
+                    startCoords: stadiumCoords,
+                    destinationCoords: dest.coords,
+                    startName: 'Confluence Stadium',
+                    destName: dest.name
+                });
+            });
+
+            // 2. Create a specific order for XYZ-1006
+            allOrders.push({
+                id: 'XYZ-1006',
+                startCoords: [7.793768176080291, 6.7314652376482265],
+                destinationCoords: [7.802675914720825, 6.733563976312113],
+                startName: 'Specialist Hospital',
+                destName: 'GTBank'
+            });
+
+            // 3. Create the remaining random orders
+            for (let i = 4; i < 100; i++) {
+                if (i === 6) continue; // Skip 1006 as it's already created
                 const orderId = `XYZ-${String(1000 + i).padStart(4, '0')}`;
+                const startPoi = pointsOfInterest[Math.floor(Math.random() * pointsOfInterest.length)];
+                const destPoi = pointsOfInterest[Math.floor(Math.random() * pointsOfInterest.length)];
+
                 allOrders.push({
                     id: orderId,
-                    startCoords: generateRandomCoords(34.15, -118.35),
-                    destinationCoords: generateRandomCoords(34.05, -118.24),
+                    startCoords: startPoi.coords,
+                    destinationCoords: destPoi.coords,
+                    startName: startPoi.name,
+                    destName: destPoi.name
                 });
             }
             renderOrderList();
-        });
+        }
+
+        simulateBtn.addEventListener('click', fetchPointsOfInterest);
 
         function renderOrderList() {
             orderListDiv.innerHTML = '';
             allOrders.forEach(order => {
                 const orderElement = document.createElement('button');
-                orderElement.className = 'p-4 bg-gray-200 rounded-lg hover:bg-blue-200';
+                orderElement.className = 'p-4 bg-gray-200 rounded-lg hover:bg-blue-200 text-sm';
                 orderElement.textContent = order.id;
                 orderElement.onclick = () => trackOrder(order.id);
                 orderListDiv.appendChild(orderElement);
@@ -114,9 +195,9 @@
 
         function initializeMap(order) {
             if (map) map.remove();
-            map = L.map('mapid').setView(order.destinationCoords, 13);
+            map = L.map('mapid').setView(order.destinationCoords, 14);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
-            L.marker(order.destinationCoords).addTo(map).bindPopup('Destination');
+            L.marker(order.destinationCoords).addTo(map).bindPopup(`Destination: ${order.destName || ''}`);
         }
 
         function startSimulation(order) {
@@ -127,6 +208,7 @@
 
             if (driverMarker) map.removeLayer(driverMarker);
             driverMarker = L.marker(order.startCoords, { icon: L.divIcon({ className: 'custom-div-icon', html: '<div class="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">🚗</div>', iconSize: [30, 30] }) }).addTo(map);
+            driverMarker.bindPopup(`Start: ${order.startName || ''}`);
 
             const interval = setInterval(() => {
                 if (currentStep < totalSteps) {
