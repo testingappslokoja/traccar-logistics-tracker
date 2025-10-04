@@ -1,0 +1,21 @@
+{
+  "name": "traccar-logistics-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm -w apps/web run dev",
+    "build": "npm -w apps/web run build > build-log.txt 2>&1",
+    "start": "npm -w apps/web run start",
+    "lint": "npm -w apps/web run lint",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:link": "supabase link",
+    "supabase:functions:deploy": "supabase functions deploy",
+    "supabase:db:push": "supabase db push",
+    "supabase:db:reset": "supabase db reset"
+  }
+}

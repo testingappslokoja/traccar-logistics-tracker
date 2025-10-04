@@ -120,10 +120,10 @@
             // 1. Create the specific first four orders
             const stadiumCoords = [7.81334, 6.69838];
             const specificDestinations = [
-                { id: 'XYZ-1000', name: 'Kogi State Specialist Hospital', coords: [7.7935662111756665, 6.731518881826145] },
-                { id: 'XYZ-1001', name: 'Treasures', coords: [7.794692961504175, 6.730789321006441] },
-                { id: 'XYZ-1002', name: 'Edge Drive Hotel', coords: [7.8026333967069235, 6.733328041929266] },
-                { id: 'XYZ-1003', name: 'Hotel Pacific', coords: [7.790236424516143, 6.724883130285108] }
+                { id: 'XYZ-1000', name: 'Kogi State Specialist Hospital', coords: [7.7935662111756665, 6.731518881826145], imageUrl: 'https://i.imgur.com/p3wHnxA.jpeg' },
+                { id: 'XYZ-1001', name: 'Treasures', coords: [7.794692961504175, 6.730789321006441], imageUrl: 'https://i.ibb.co/9g7v3Y1/treasures-lokoja.jpg' },
+                { id: 'XYZ-1002', name: 'Edge Drive Hotel', coords: [7.8026333967069235, 6.733328041929266], imageUrl: 'https://i.ibb.co/bX244Vv/edge-drive-hotel.jpg' },
+                { id: 'XYZ-1003', name: 'Hotel Pacific', coords: [7.790236424516143, 6.724883130285108], imageUrl: 'https://i.ibb.co/z5Nn7cW/hotel-pacific-lokoja.jpg' }
             ];
 
             specificDestinations.forEach(dest => {
@@ -132,7 +132,8 @@
                     startCoords: stadiumCoords,
                     destinationCoords: dest.coords,
                     startName: 'Confluence Stadium',
-                    destName: dest.name
+                    destName: dest.name,
+                    destImageUrl: dest.imageUrl
                 });
             });
 
@@ -142,7 +143,8 @@
                 startCoords: [7.793768176080291, 6.7314652376482265],
                 destinationCoords: [7.802675914720825, 6.733563976312113],
                 startName: 'Specialist Hospital',
-                destName: 'GTBank'
+                destName: 'GTBank',
+                destImageUrl: 'https://i.imgur.com/LdrAhJI.jpeg'
             });
 
             // 3. Create the remaining random orders
@@ -157,7 +159,8 @@
                     startCoords: startPoi.coords,
                     destinationCoords: destPoi.coords,
                     startName: startPoi.name,
-                    destName: destPoi.name
+                    destName: destPoi.name,
+                    destImageUrl: destPoi.imageUrl // This will be undefined for now
                 });
             }
             renderOrderList();
@@ -197,7 +200,12 @@
             if (map) map.remove();
             map = L.map('mapid').setView(order.destinationCoords, 14);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
-            L.marker(order.destinationCoords).addTo(map).bindPopup(`Destination: ${order.destName || ''}`);
+            
+            let popupContent = `<b>Destination:</b> ${order.destName || ''}`;
+            if (order.destImageUrl) {
+                popupContent += `<br><img src="${order.destImageUrl}" alt="${order.destName}" width="150">`;
+            }
+            L.marker(order.destinationCoords).addTo(map).bindPopup(popupContent);
         }
 
         function startSimulation(order) {
