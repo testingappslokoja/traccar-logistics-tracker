@@ -28,7 +28,6 @@ export async function POST(request: Request) {
           return null;
         }
         const data = await traccarRes.json();
-        console.log(`Response for deviceId ${deviceId}:`, data);
         return data.length > 0 ? data[0] : null;
       })
     );

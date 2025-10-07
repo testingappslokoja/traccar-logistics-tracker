@@ -6,10 +6,10 @@ import { Product } from '@repo/shared-types';
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [email, setEmail] = useState('test@example.com');
+  const [password, setPassword] = useState('password');
 
   useEffect(() => {
-    // In a real app, you'd fetch this from the database.
-    // For now, we'll use mock data.
     const mockProducts: Product[] = [
       { id: 'prod_1', name: 'Premium Widget', price: 1999, imageUrl: 'https://i.imgur.com/LdrAhJI.jpeg' },
       { id: 'prod_2', name: 'Deluxe Gadget', price: 2999, imageUrl: 'https://i.imgur.com/p3wHnxA.jpeg' },
@@ -17,9 +17,6 @@ export default function Home() {
     ];
     setProducts(mockProducts);
   }, []);
-
-  const [email, setEmail] = useState('test@example.com');
-  const [password, setPassword] = useState('password');
 
   const handleLogin = async () => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -31,12 +28,6 @@ export default function Home() {
   };
 
   const handleCreateOrder = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      alert('Please log in to create an order.');
-      return;
-    }
-
     const lineItems = [{ productId: 'prod_1', quantity: 2, name: 'Premium Widget', price: 1999 }];
     const startCoords = [7.81334, 6.69838]; // Confluence Stadium
     const destinationCoords = [7.7935662111756665, 6.731518881826145]; // Specialist Hospital

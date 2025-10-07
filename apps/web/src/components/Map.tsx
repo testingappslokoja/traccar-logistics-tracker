@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { Polyline, MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { TraccarPosition } from '@repo/shared-types';
 
 // Fix for default Leaflet icon not appearing
 L.Icon.Default.mergeOptions({
@@ -24,21 +22,20 @@ interface MapProps {
 }
 
 export default function Map({ deviceIds }: MapProps) {
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const driverMarkersRef = useRef<{ [key: number]: L.Marker }>({});
-  const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const [driverPaths, setDriverPaths] = useState<{ [key: number]: [number, number][] }>({});
+  const driverPathsRef = useRef<{ [key: number]: L.Polyline }>({});
 
   useEffect(() => {
-    if (mapRef.current || !mapContainerRef.current) return;
+    if (mapContainerRef.current && !mapRef.current) {
+      const map = L.map(mapContainerRef.current).setView([7.800, 6.736], 13);
+      mapRef.current = map;
 
-    // Initialize Map centered on Lokoja
-    const map = L.map(mapContainerRef.current!).setView([7.800, 6.736], 13);
-    mapRef.current = map;
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(map);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(map);
+    }
 
     const locationInterval = setInterval(async () => {
       const res = await fetch('/api/get-location', {
@@ -52,27 +49,26 @@ export default function Map({ deviceIds }: MapProps) {
         return;
       }
 
-      const positions: TraccarPosition[] = await res.json();
-
-      const newPaths = { ...driverPaths };
+      const positions: any[] = await res.json();
 
       positions.forEach(pos => {
         const newLatLng = new L.LatLng(pos.latitude, pos.longitude);
+
         if (driverMarkersRef.current[pos.deviceId]) {
           driverMarkersRef.current[pos.deviceId].setLatLng(newLatLng);
-        } else {
-          const newMarker = L.marker(newLatLng, { icon: driverIcon }).addTo(mapRef.current!);
+        } else if (mapRef.current) {
+          const newMarker = L.marker(newLatLng, { icon: driverIcon }).addTo(mapRef.current);
           newMarker.bindPopup(`Device: ${pos.deviceId}`);
           driverMarkersRef.current[pos.deviceId] = newMarker;
         }
 
-        if (!newPaths[pos.deviceId]) {
-          newPaths[pos.deviceId] = [];
+        if (mapRef.current) {
+          if (!driverPathsRef.current[pos.deviceId]) {
+            driverPathsRef.current[pos.deviceId] = L.polyline([], { color: 'blue' }).addTo(mapRef.current);
+          }
+          driverPathsRef.current[pos.deviceId].addLatLng(newLatLng);
         }
-        newPaths[pos.deviceId].push([pos.latitude, pos.longitude]);
       });
-
-      setDriverPaths(newPaths);
 
       if (mapRef.current && positions.length > 0) {
         const bounds = L.latLngBounds(positions.map(p => [p.latitude, p.longitude]));
@@ -89,17 +85,5 @@ export default function Map({ deviceIds }: MapProps) {
     };
   }, [deviceIds]);
 
-  return (
-    <div ref={mapContainerRef} style={{ height: '600px', width: '100%' }} >
-      <MapContainer center={[7.800, 6.736]} zoom={13} style={{ height: '100%', width: '100%' }}>
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        />
-        {Object.values(driverPaths).map((path, index) => (
-          <Polyline key={index} positions={path} color="blue" />
-        ))}
-      </MapContainer>
-    </div>
-  );
+  return <div ref={mapContainerRef} style={{ height: '600px', width: '100%' }} />;
 }

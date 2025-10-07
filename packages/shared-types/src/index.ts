@@ -1,4 +1,9 @@
-// Define shared TypeScript interfaces here
+export interface TraccarPosition {
+  deviceId: number;
+  latitude: number;
+  longitude: number;
+  // Add other properties as needed
+}
 
 export interface User {
   id: string; // UUID
@@ -21,13 +26,6 @@ export interface LineItem {
 }
 
 export type OrderStatus = 'Awaiting Payment' | 'Placed' | 'En Route' | 'Delivered';
-
-export interface TraccarPosition {
-  deviceId: number;
-  latitude: number;
-  longitude: number;
-  // Add other properties as needed
-}
 
 export interface Order {
   id: string; // UUID

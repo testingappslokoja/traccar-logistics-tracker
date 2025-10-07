@@ -27,7 +27,6 @@ export default function OrderPage() {
         console.error('Error fetching order:', error);
         alert('Could not fetch order details.');
       } else {
-        console.log('Fetched order data:', data);
         setOrder(data as Order);
       }
       setLoading(false);
@@ -54,19 +53,20 @@ export default function OrderPage() {
           <p><span className="font-semibold">Total:</span> ${(order.total / 100).toFixed(2)}</p>
           <div className="mt-4">
             <h2 className="text-2xl font-semibold mb-2">Items:</h2>
-              <ul>
-                {order.lineItems && order.lineItems.map((item: LineItem, index: number) => (
-                  <li key={index} className="flex justify-between">
-                    <span>{item.name} (x{item.quantity})</span>
-                    <span>${(item.price / 100).toFixed(2)}</span>
-                  </li>
-                ))}
-              </ul>
+            <ul>
+              {order.lineItems && order.lineItems.map((item: LineItem, index: number) => (
+                <li key={index} className="flex justify-between">
+                  <span>{item.name} (x{item.quantity})</span>
+                  <span>${(item.price / 100).toFixed(2)}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
-          <div className="md:col-span-2 h-[600px] rounded-lg shadow-md">
-            <DynamicMap deviceIds={[16279, 16136]} />
-          </div>      </div>
+        <div className="md:col-span-2 h-[600px] rounded-lg shadow-md">
+          <DynamicMap deviceIds={[16279, 16136]} />
+        </div>
+      </div>
     </main>
   );
 }
