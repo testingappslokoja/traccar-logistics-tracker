@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import type { Order, LineItem } from '@repo/shared-types';
-import DynamicMap from '@/components/DynamicMap';
+import DynamicMap from './DynamicMap';
 
 import { useParams } from 'next/navigation';
 
